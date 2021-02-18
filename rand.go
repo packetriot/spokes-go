@@ -42,12 +42,3 @@ func randomString(n int64) string {
 	return s[:n]
 }
 
-// const (
-// 	minNonceLength int64 = 32
-// 	maxNonceLength int64 = 512
-// )
-
-// func nonce() string {
-// 	n := randomNum(maxNonceLength-minNonceLength) + minNonceLength
-// 	return string(n)
-// }
