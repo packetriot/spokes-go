@@ -16,6 +16,7 @@ import (
 const (
 	AuthPath           = "/api/admin/v1.0/auth"
 	LogoutPath         = "/api/admin/v1.0/logout"
+	LicenseInfoPath    = "/api/admin/v1.0/license/info"
 	ListTokensPath     = "/api/admin/v1.0/token/registration/list"
 	CreateTokenPath    = "/api/admin/v1.0/token/registration/create"
 	EditTokenPath      = "/api/admin/v1.0/token/registration/edit"
@@ -29,6 +30,10 @@ const (
 	ShutdownTunPath    = "/api/admin/v1.0/tunnel/shutdown/"
 	GetPortsPath       = "/api/admin/v1.0/port/list"
 	GetPortRangePath   = "/api/admin/v1.0/port/range"
+)
+
+var (
+	debug = false
 )
 
 type Client struct {
@@ -92,6 +97,25 @@ func (c *Client) Logout() (*BasicResponse, error) {
 				return br, nil
 			} else {
 				return nil, fmt.Errorf(br.Error)
+			}
+		}
+	}
+
+	return nil, err
+}
+
+func (c *Client) License() (*LicenseInfoResponse, error) {
+	response, err := c.request("GET", LicenseInfoPath, nil)
+	if err == nil {
+		lir := &LicenseInfoResponse{}
+		if err = json.Decode(response.Body, lir); err == nil {
+			response.Body.Close()
+			if lir.Status {
+				// Debug
+				dumpPrettyJson(lir)
+				return lir, nil
+			} else {
+				return nil, fmt.Errorf(lir.Error)
 			}
 		}
 	}
@@ -168,6 +192,7 @@ func (c *Client) EditToken(tokenID UID, description string, active bool) (*Token
 
 	return nil, err
 }
+
 func (c *Client) DeleteToken(tokenID UID) (*BasicResponse, error) {
 	tr := TokenRequest{TokenID: tokenID}
 	response, err := c.request("POST", DeleteTokenPath, &tr)
@@ -267,7 +292,7 @@ func (c *Client) Tunnel(id UID) (*TunResponse, error) {
 
 func (c *Client) TunnelAuth(id UID) (*TokenResponse, error) {
 	path := GetTunAuthPath + id.String()
-	response, err := c.request("GET", path, &TunRequest{TunID: id})
+	response, err := c.request("GET", path, nil)
 	if err == nil {
 		tr := &TokenResponse{}
 		if err = json.Decode(response.Body, tr); err == nil {
@@ -287,7 +312,7 @@ func (c *Client) TunnelAuth(id UID) (*TokenResponse, error) {
 
 func (c *Client) TunnelConfig(id UID) (*TunConfigResponse, error) {
 	path := GetTunConfigPath + id.String()
-	response, err := c.request("GET", path, &TunRequest{TunID: id})
+	response, err := c.request("GET", path, nil)
 	if err == nil {
 		tcr := &TunConfigResponse{}
 		if err = json.Decode(response.Body, tcr); err == nil {
@@ -369,7 +394,9 @@ func (c *Client) request(method, path string, message interface{}) (response *ht
 	if err = json.EncodePretty(body, message); err == nil {
 		var request *http.Request
 
-		fmt.Printf("URL: %s\n\nMessage:\n%s\n", path, body.String())
+		if debug {
+			fmt.Printf("URL: %s\n\nMessage:\n%s\n", path, body.String())
+		}
 
 		request, err = http.NewRequest(method, c.address+path, body)
 
@@ -394,7 +421,9 @@ func (c *Client) request(method, path string, message interface{}) (response *ht
 }
 
 func dumpPrettyJson(v interface{}) {
-	fmt.Println("Response:")
-	json.EncodePretty(os.Stdout, v)
-	fmt.Println("")
+	if debug {
+		fmt.Println("Response:")
+		json.EncodePretty(os.Stdout, v)
+		fmt.Println("")
+	}
 }

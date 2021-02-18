@@ -1,5 +1,9 @@
 package spokes
 
+import (
+	"time"
+)
+
 type BasicResponse struct {
 	Status  bool   `json:"status"`
 	Message string `json:"message"`
@@ -106,4 +110,11 @@ type UserResponse struct {
 
 	// User object for creation, import
 	User *User `json:"user,omitempty"`
+}
+
+type LicenseInfoResponse struct {
+	Status     bool      `json:"status"`
+	Error      string    `json:"error"`
+	MaxTunnels int       `json:"maxTunnels"`
+	Expires    time.Time `json:"expires"`
 }

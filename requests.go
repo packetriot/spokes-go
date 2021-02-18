@@ -33,11 +33,12 @@ type TokenRequest struct {
 }
 
 type UserRequest struct {
-	UserID   UID    `json:"userID"`
-	Email    string `json:"email,omitempty"`
-	Fullname string `json:"fullname,omitempty"`
-	Phone    string `json:"phone,omitempty"`
-	Active   bool   `json:"active,omitempty`
+	UserID       UID    `json:"userID"`
+	Email        string `json:"email,omitempty"`
+	Fullname     string `json:"fullname,omitempty"`
+	Phone        string `json:"phone,omitempty"`
+	Active       bool   `json:"active,omitempty`
+	MaxBandwidth int    `json:"maxBandwidth"`
 }
 
 type BandwidthRequest struct {
