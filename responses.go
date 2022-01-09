@@ -6,8 +6,8 @@ import (
 
 type BasicResponse struct {
 	Status  bool   `json:"status"`
-	Message string `json:"message"`
-	Error   string `json:"error"`
+	Message string `json:"message,omitempty"`
+	Error   string `json:"error,omitempty"`
 }
 
 type TunResponse struct {
@@ -15,7 +15,9 @@ type TunResponse struct {
 	Error  string `json:"error"`
 
 	// List of tunnels (all, active, online)
-	Tunnels []*Tunnel `json:"tunnels,omitempty"`
+	Total   int            `json:"total,omitempty"`
+	Tunnels []*Tunnel      `json:"tunnels,omitempty"`
+	Links   []*TunRespLink `json:"links,omitempty"`
 
 	// Detailed single tunnel response
 	Tunnel *Tunnel `json:"tunnel,omitempty"`
@@ -24,9 +26,16 @@ type TunResponse struct {
 	Token *APIKey `json:"token,omitempty"`
 }
 
+type TunRespLink struct {
+	UID   string `json:"uid"`
+	Order int    `json:"order"`
+	Count int    `json:"count"`
+	URL   string `json:"url"`
+}
+
 type PortResponse struct {
 	Status bool       `json:"status"`
-	Error  string     `json:"error"`
+	Error  string     `json:"error,omitempty"`
 	Ports  []*PortTun `json:"ports"`
 }
 
@@ -37,7 +46,7 @@ type PortTun struct {
 
 type PortRangeResponse struct {
 	Status bool      `json:"status"`
-	Error  string    `json:"error"`
+	Error  string    `json:"error,omitempty"`
 	Range  PortRange `json:"range"`
 }
 
@@ -48,7 +57,7 @@ type PortRange struct {
 
 type TokenResponse struct {
 	Status bool   `json:"status"`
-	Error  string `json:"error"`
+	Error  string `json:"error,omitempty"`
 
 	// List token operations (registration, auth)
 	Tokens []*APIKey `json:"tokens,omitempty"`
@@ -59,17 +68,18 @@ type TokenResponse struct {
 
 type TunConfigResponse struct {
 	Status bool       `json:"status"`
-	Error  string     `json:"error"`
+	Error  string     `json:"error,omitempty"`
 	Config *TunConfig `json:"config"`
 }
 
 // Supports pktriot client HTTP API.  Can be used as a request or a response.
 type TunConfig struct {
-	Version string  `json:"version,omitempty"`
-	OS      string  `json:"os,omitempty"`
-	Arch    string  `json:"arch,omitempty"`
-	Https   []*Http `json:"https,omitempty"`
-	Ports   []*Port `json:"ports,omitempty"`
+	Version      string     `json:"version,omitempty"`
+	OS           string     `json:"os,omitempty"`
+	Arch         string     `json:"arch,omitempty"`
+	Https        []*Http    `json:"https,omitempty"`
+	Ports        []*Port    `json:"ports,omitempty"`
+	PortMappings []*PortMap `json:"portmaps,omitempty"`
 }
 
 type Http struct {
@@ -78,12 +88,14 @@ type Http struct {
 	Destination   string `json:"destination,omitempty"`   // forward to this host/address
 	Port          int    `json:"port,omitempty"`          // port to forward on
 	TLS           int    `json:"tls,omitempty"`           // port to forward to for TLS
+	UpstreamURL   string `json:"upstreamURL,omitempty"`   // upstream service addressed w/URL, e.g. http://127.0.0.1:8080
 	WebRoot       string `json:"webRoot,omitempty"`       // static document root to serve content
 	UseLetsEnc    bool   `json:"useLetsEnc,omitempty"`    // use lets-encrypt for TLS certificates
 	CA            string `json:"ca,omitempty"`            // path to custom certificate authority
 	PrivateKey    string `json:"privateKey,omitempty"`    // path to custom privacy key
 	Redirect      bool   `json:"redirect,omitempty"`      // redirect to https
 	Password      string `json:"password,omitempty"`      // salted-hash of password to permit traffic
+	Requires2FA   bool   `json:"requires2FA,omitempty"`   // indicates 2FA is used for authentication
 	BasicHTTPAuth string `json:"basicHttpAuth,omitempty"` // salted-hash of user:password (HTTP basic auth) to permit traffic
 	RedirectURL   string `json:"redirectURL,omitempty"`   // redirect all requests to URL
 	RewriteHost   string `json:"rewriteHost,omitempty"`   // modify host header with this value
@@ -95,15 +107,24 @@ type Port struct {
 	DstPort     int    `json:"dstPort,omitempty"`
 }
 
+type PortMap struct {
+	ListenPort  int    `json:"listenPort"`
+	DstPort     int    `json:"dstPort"`
+	Destination string `json:"destination"`     // hostname, IP address
+	Transport   string `json:"transport"`       // tcp, udp
+	Label       string `json:"label,omitempty"` // e.g. ssh, smtp, docker
+	HTTP        bool   `json:"http,omitempty"`  // flag indicates http traffic
+}
+
 type DomainResponse struct {
 	Status  bool     `json:"status"`
-	Error   string   `json:"error"`
+	Error   string   `json:"error,omitempty"`
 	Domains []string `json:"domains"`
 }
 
 type UserResponse struct {
 	Status bool   `json:"status"`
-	Error  string `json:"error"`
+	Error  string `json:"error,omitempty"`
 
 	// List of all (basic) users on the system
 	Users []*User `json:"users,omitempty"`
@@ -114,7 +135,7 @@ type UserResponse struct {
 
 type LicenseInfoResponse struct {
 	Status     bool      `json:"status"`
-	Error      string    `json:"error"`
+	Error      string    `json:"error,omitempty"`
 	MaxTunnels int       `json:"maxTunnels"`
 	Expires    time.Time `json:"expires"`
 }

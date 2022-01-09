@@ -53,4 +53,32 @@ func main() {
 
 	fmt.Println("Port Range")
 	client.PortRange()
+
+	fmt.Println("Getting *ALL* Tunnels")
+	if resp, _ := client.Tunnels(); resp != nil {
+		fmt.Printf("Number of pages: %d\n", len(resp.Links))
+		for i := 0; i < len(resp.Links); i++ {
+
+			pageResp, err := client.GetTunPageResult(resp.Links[i].UID)
+			if err != nil {
+				fmt.Println("Error: " + err.Error())
+			} else {
+				fmt.Printf("\tNum tunnels in page %d - %d\n", resp.Links[i].Order, len(pageResp.Tunnels))
+			}
+		}
+	}
+
+	fmt.Println("Searching Tunnels")
+	if resp, _ := client.SearchTunnels(&spokes.SearchTunRequest{OS: "windows"}); resp != nil {
+		fmt.Printf("Number of pages: %d\n", len(resp.Links))
+		for i := 0; i < len(resp.Links); i++ {
+
+			pageResp, err := client.GetTunPageResult(resp.Links[i].UID)
+			if err != nil {
+				fmt.Println("Error: " + err.Error())
+			} else {
+				fmt.Printf("\tNum tunnels in page %d - %d\n", resp.Links[i].Order, len(pageResp.Tunnels))
+			}
+		}
+	}
 }

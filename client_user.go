@@ -47,7 +47,7 @@ func (c *Client) CreateUser(user *UserRequest) (*UserResponse, error) {
 		return nil, fmt.Errorf("invalid (nil) user argument")
 	}
 
-	response, err := c.request("POST", CreateUserPath, &user)
+	response, err := c.request("POST", CreateUserPath, user)
 	if err == nil {
 		ur := &UserResponse{}
 		if err = json.Decode(response.Body, ur); err == nil {
@@ -72,7 +72,7 @@ func (c *Client) EditUser(user *UserRequest) (*BasicResponse, error) {
 		return nil, fmt.Errorf("invalid ID for user, it's a zero value")
 	}
 
-	response, err := c.request("POST", EditUserPath, &user)
+	response, err := c.request("POST", EditUserPath, user)
 	if err == nil {
 		br := &BasicResponse{}
 		if err = json.Decode(response.Body, br); err == nil {
@@ -117,7 +117,7 @@ func (c *Client) ImportUser(user *UserRequest) (*UserResponse, error) {
 		return nil, fmt.Errorf("invalid ID for user, it's a zero value")
 	}
 
-	response, err := c.request("POST", ImportUserPath, &user)
+	response, err := c.request("POST", ImportUserPath, user)
 	if err == nil {
 		ur := &UserResponse{}
 		if err = json.Decode(response.Body, ur); err == nil {

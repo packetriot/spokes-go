@@ -17,6 +17,13 @@ type CreateTunRequest struct {
 	Hostname string `json:"hostname"`
 }
 
+type SearchTunRequest struct {
+	Term    string `json:"term"`
+	OS      string `json:"os"`
+	Arch    string `json:"arch"`
+	Version string `json:"version"`
+}
+
 type CreateTokenRequest struct {
 	Description string `json:"description"`
 	Active      bool   `json:"active"`
@@ -49,4 +56,28 @@ type BandwidthRequest struct {
 type DomainRequest struct {
 	UserID  UID      `json:"userID"`
 	Domains []string `json:"domains"`
+}
+
+type UpdateHTTPRequest struct {
+	Sites []*Http `json:"sites"`
+}
+
+type RemoveHTTPRequest struct {
+	Domains []string `json:"domains"`
+}
+
+type UpdatePortRequest struct {
+	Ports []*Port `json:"ports"`
+}
+
+type ResetPortRequest struct {
+	Ports []int `json:"ports"`
+}
+
+type UpdatePortMapRequest struct {
+	PortMappings []*PortMap `json:"portmaps"`
+}
+
+type RemovePortMapRequest struct {
+	ListenPorts []int `json:"listenPorts"`
 }

@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	BasePath           = "/api/admin/"
 	AuthPath           = "/api/admin/v1.0/auth"
 	LogoutPath         = "/api/admin/v1.0/logout"
 	LicenseInfoPath    = "/api/admin/v1.0/license/info"
@@ -24,6 +25,8 @@ const (
 	ListTunsPath       = "/api/admin/v1.0/tunnel/list"
 	ListActiveTunsPath = "/api/admin/v1.0/tunnel/list/active"
 	ListOnlineTunsPath = "/api/admin/v1.0/tunnel/list/online"
+	SearchTunsPath     = "/api/admin/v1.0/tunnel/search"
+	TunPagePath        = "/api/admin/v1.0/tunnel/page/"
 	GetTunInfoPath     = "/api/admin/v1.0/tunnel/info/"
 	GetTunAuthPath     = "/api/admin/v1.0/tunnel/auth/"
 	GetTunConfigPath   = "/api/admin/v1.0/tunnel/config/"
@@ -253,6 +256,45 @@ func (c *Client) ActiveTunnels() (*TunResponse, error) {
 
 func (c *Client) OnlineTunnels() (*TunResponse, error) {
 	response, err := c.request("GET", ListOnlineTunsPath, nil)
+	if err == nil {
+		tr := &TunResponse{}
+		if err = json.Decode(response.Body, tr); err == nil {
+			response.Body.Close()
+			if tr.Status {
+				// Debug
+				dumpPrettyJson(tr)
+				return tr, nil
+			} else {
+				return nil, fmt.Errorf(tr.Error)
+			}
+		}
+	}
+
+	return nil, err
+}
+
+func (c *Client) SearchTunnels(input *SearchTunRequest) (*TunResponse, error) {
+	response, err := c.request("POST", SearchTunsPath, input)
+	if err == nil {
+		tr := &TunResponse{}
+		if err = json.Decode(response.Body, tr); err == nil {
+			response.Body.Close()
+			if tr.Status {
+				// Debug
+				dumpPrettyJson(tr)
+				return tr, nil
+			} else {
+				return nil, fmt.Errorf(tr.Error)
+			}
+		}
+	}
+
+	return nil, err
+}
+
+func (c *Client) GetTunPageResult(uid string) (*TunResponse, error) {
+	path := TunPagePath + uid
+	response, err := c.request("GET", path, nil)
 	if err == nil {
 		tr := &TunResponse{}
 		if err = json.Decode(response.Body, tr); err == nil {
