@@ -83,22 +83,23 @@ type TunConfig struct {
 }
 
 type Http struct {
-	Domain        string `json:"domain,omitempty"`        // domain request, e.g. example.com
-	Secure        bool   `json:"secure,omitempty"`        // indicates http (80) and/or https (443)
-	Destination   string `json:"destination,omitempty"`   // forward to this host/address
-	Port          int    `json:"port,omitempty"`          // port to forward on
-	TLS           int    `json:"tls,omitempty"`           // port to forward to for TLS
-	UpstreamURL   string `json:"upstreamURL,omitempty"`   // upstream service addressed w/URL, e.g. http://127.0.0.1:8080
-	WebRoot       string `json:"webRoot,omitempty"`       // static document root to serve content
-	UseLetsEnc    bool   `json:"useLetsEnc,omitempty"`    // use lets-encrypt for TLS certificates
-	CA            string `json:"ca,omitempty"`            // path to custom certificate authority
-	PrivateKey    string `json:"privateKey,omitempty"`    // path to custom privacy key
-	Redirect      bool   `json:"redirect,omitempty"`      // redirect to https
-	Password      string `json:"password,omitempty"`      // salted-hash of password to permit traffic
-	Requires2FA   bool   `json:"requires2FA,omitempty"`   // indicates 2FA is used for authentication
-	BasicHTTPAuth string `json:"basicHttpAuth,omitempty"` // salted-hash of user:password (HTTP basic auth) to permit traffic
-	RedirectURL   string `json:"redirectURL,omitempty"`   // redirect all requests to URL
-	RewriteHost   string `json:"rewriteHost,omitempty"`   // modify host header with this value
+	Domain           string `json:"domain,omitempty"`           // domain request, e.g. example.com
+	Secure           bool   `json:"secure,omitempty"`           // indicates http (80) and/or https (443)
+	Destination      string `json:"destination,omitempty"`      // forward to this host/address
+	Port             int    `json:"port,omitempty"`             // port to forward on
+	TLS              int    `json:"tls,omitempty"`              // port to forward to for TLS
+	UpstreamURL      string `json:"upstreamURL,omitempty"`      // upstream service addressed w/URL, e.g. http://127.0.0.1:8080
+	WebRoot          string `json:"webRoot,omitempty"`          // static document root to serve content
+	UseLetsEnc       bool   `json:"useLetsEnc,omitempty"`       // use lets-encrypt for TLS certificates
+	CA               string `json:"ca,omitempty"`               // path to custom certificate authority
+	PrivateKey       string `json:"privateKey,omitempty"`       // path to custom privacy key
+	Redirect         bool   `json:"redirect,omitempty"`         // redirect to https
+	Password         string `json:"password,omitempty"`         // salted-hash of password to permit traffic
+	Requires2FA      bool   `json:"requires2FA,omitempty"`      // indicates 2FA is used for authentication
+	BasicHTTPAuth    string `json:"basicHttpAuth,omitempty"`    // salted-hash of user:password (HTTP basic auth) to permit traffic
+	RedirectURL      string `json:"redirectURL,omitempty"`      // redirect all requests to URL
+	RewriteHost      string `json:"rewriteHost,omitempty"`      // modify host header with this value
+	InsecureUpstream bool   `json:"insecureUpstream,omitempty"` // Accept insecure TLS upstream servers
 }
 
 type Port struct {
