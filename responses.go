@@ -10,6 +10,19 @@ type BasicResponse struct {
 	Error   string `json:"error,omitempty"`
 }
 
+type ServerInfoResponse struct {
+	Status            bool      `json:"status"`
+	Message           string    `json:"message,omitempty"`
+	Error             string    `json:"error,omitempty"`
+	Version           string    `json:"version"`
+	Uptime            int       `json:"uptime"`
+	Alerts            int       `json:"alerts"`
+	ActiveTuns        int       `json:"activeTuns"`
+	OnlineTuns        int       `json:"onlineTuns"`
+	MaxTuns           int       `json:"maxTuns"`
+	LicenseExpiration time.Time `json:"licenseExpires,omitempty"`
+}
+
 type TunResponse struct {
 	Status bool   `json:"status"`
 	Error  string `json:"error"`
@@ -74,6 +87,15 @@ type TunConfigResponse struct {
 
 // Supports pktriot client HTTP API.  Can be used as a request or a response.
 type TunConfig struct {
+	// Extra fields that exist in the client configuration so we can
+	// rebuild client configurations when required.
+	Hostname   string `json:"hostname,omitempty"`
+	ServerKey  string `json:"serverKey,omitempty"`
+	ServerHost string `json:"serverHost,omitempty"`
+	Unmanaged  bool   `json:"unmanaged,omitempty"`
+	Key        string `json:"key,omitempty"`
+
+	// Original fields in the Spokes Admin API.
 	Version      string     `json:"version,omitempty"`
 	OS           string     `json:"os,omitempty"`
 	Arch         string     `json:"arch,omitempty"`
@@ -82,30 +104,52 @@ type TunConfig struct {
 	PortMappings []*PortMap `json:"portmaps,omitempty"`
 }
 
+const (
+	FwActionAllow = "allow"
+	FwActionDrop  = "drop"
+)
+
+type FwRule struct {
+	Sequence int    `json:"sequence"`
+	Action   string `json:"action"`
+	Network  string `json:"network"`
+}
+
+type FwRuleList []FwRule
+
 type Http struct {
-	Domain           string `json:"domain,omitempty"`           // domain request, e.g. example.com
-	Secure           bool   `json:"secure,omitempty"`           // indicates http (80) and/or https (443)
-	Destination      string `json:"destination,omitempty"`      // forward to this host/address
-	Port             int    `json:"port,omitempty"`             // port to forward on
-	TLS              int    `json:"tls,omitempty"`              // port to forward to for TLS
-	UpstreamURL      string `json:"upstreamURL,omitempty"`      // upstream service addressed w/URL, e.g. http://127.0.0.1:8080
-	WebRoot          string `json:"webRoot,omitempty"`          // static document root to serve content
-	UseLetsEnc       bool   `json:"useLetsEnc,omitempty"`       // use lets-encrypt for TLS certificates
-	CA               string `json:"ca,omitempty"`               // path to custom certificate authority
-	PrivateKey       string `json:"privateKey,omitempty"`       // path to custom privacy key
-	Redirect         bool   `json:"redirect,omitempty"`         // redirect to https
-	Password         string `json:"password,omitempty"`         // salted-hash of password to permit traffic
-	Requires2FA      bool   `json:"requires2FA,omitempty"`      // indicates 2FA is used for authentication
-	BasicHTTPAuth    string `json:"basicHttpAuth,omitempty"`    // salted-hash of user:password (HTTP basic auth) to permit traffic
-	RedirectURL      string `json:"redirectURL,omitempty"`      // redirect all requests to URL
-	RewriteHost      string `json:"rewriteHost,omitempty"`      // modify host header with this value
-	InsecureUpstream bool   `json:"insecureUpstream,omitempty"` // Accept insecure TLS upstream servers
+	Domain           string           `json:"domain,omitempty"`           // domain request, e.g. example.com
+	Secure           bool             `json:"secure,omitempty"`           // indicates http (80) and/or https (443)
+	Destination      string           `json:"destination,omitempty"`      // forward to this host/address
+	Port             int              `json:"port,omitempty"`             // port to forward on
+	TLS              int              `json:"tls,omitempty"`              // port to forward to for TLS
+	UpstreamURL      string           `json:"upstreamURL,omitempty"`      // upstream service addressed w/URL, e.g. http://127.0.0.1:8080
+	WebRoot          string           `json:"webRoot,omitempty"`          // static document root to serve content
+	UseLetsEnc       bool             `json:"useLetsEnc,omitempty"`       // use lets-encrypt for TLS certificates
+	CA               string           `json:"ca,omitempty"`               // path to custom certificate authority
+	PrivateKey       string           `json:"privateKey,omitempty"`       // path to custom privacy key
+	Firewall         FwRuleList       `json:"firewall,omitempty"`         // list of firewall rules
+	Redirect         bool             `json:"redirect,omitempty"`         // redirect to https
+	Password         string           `json:"password,omitempty"`         // salted-hash of password to permit traffic
+	Requires2FA      bool             `json:"requires2FA,omitempty"`      // indicates 2FA is used for authentication
+	BasicHTTPAuth    string           `json:"basicHttpAuth,omitempty"`    // salted-hash of user:password (HTTP basic auth) to permit traffic
+	RedirectURL      string           `json:"redirectURL,omitempty"`      // redirect all requests to URL
+	RewriteHost      string           `json:"rewriteHost,omitempty"`      // modify host header with this value
+	InsecureUpstream bool             `json:"insecureUpstream,omitempty"` // accept insecure TLS upstream servers
+	AuthPageOpts     *AuthPageOptions `json:"authPageOpts,omitempty"`     // customization options for authentication pages
+}
+
+type AuthPageOptions struct {
+	Title   string `json:"title,omitempty"`
+	LogoURL string `json:"logoURL,omitempty"`
+	SiteURL string `json:"siteURL,omitempty"`
 }
 
 type Port struct {
-	Port        int    `json:"port,omitempty"`        // port used by servers, e.g. 22001 (for ssh)
-	Destination string `json:"destination,omitempty"` // forward to this host/address
-	DstPort     int    `json:"dstPort,omitempty"`
+	Port        int        `json:"port,omitempty"`        // port used by servers, e.g. 22001 (for ssh)
+	Destination string     `json:"destination,omitempty"` // forward to this host/address
+	DstPort     int        `json:"dstPort,omitempty"`     // port to forward to
+	Firewall    FwRuleList `json:"firewall,omitempty"`    // list of firewall rules
 }
 
 type PortMap struct {

@@ -19,6 +19,12 @@ const (
 	UDP
 )
 
+const (
+	// Values for ConnMetric.Service
+	ServiceHttp uint16 = iota + 1
+	ServicePort
+)
+
 var (
 	minute = (60.0 * 60.0)
 	day    = (60.0 * 60.0 * 24.0)
@@ -114,7 +120,7 @@ func (t *Tunnel) DomainNames() (domains []string) {
 		domainMap[http.DomainName] = true
 	}
 
-	for domainName, _ := range domainMap {
+	for domainName := range domainMap {
 		domains = append(domains, domainName)
 	}
 
@@ -149,7 +155,7 @@ type PortService struct {
 	UserID    UID       `json:"userID"`
 	TunID     UID       `json:"tunID"`
 	Active    bool      `json:"active"`
-	Available bool      `json:"availabe"`
+	Available bool      `json:"available"`
 	Protocol  uint16    `json:"protocol"`  // tcp/udp
 	Port      int       `json:"port"`      // port used by servers, e.g. 22001 (for ssh)
 	Bandwidth DataUsage `json:"bandwidth"` // bandwidth stats
@@ -188,4 +194,35 @@ func (bs ByteSize) Units() (float64, string) {
 	}
 
 	return (value / tb), "TB"
+}
+
+type ConnMetric struct {
+	ID          UID       `json:"id"`
+	TunnelID    UID       `json:"tunID"`
+	ServiceID   UID       `json:"serviceID"` // unique ID for http/port service
+	Service     uint16    `json:"service"`   // indicates the service type
+	Address     string    `json:"address"`   // ip address of client
+	Bandwidth   int64     `json:"bandwidth"` // read + write
+	Established time.Time `json:"established"`
+	Closed      time.Time `json:"closed"`
+
+	// Runtime field
+	ServerName string `json:"-"`
+	Port       uint16 `json:"-"`
+}
+
+func (cm *ConnMetric) DataUsage() string {
+	bs := ByteSize(cm.Bandwidth)
+	return bs.String()
+}
+
+// TunService is used to associate a tunnel with an HTTP *or* a PortService
+// and an availability state for the service. This struct is used to communicate
+// when a service goes up/down.
+type TunService struct {
+	Tun       *Tunnel      `json:"tunnel"`
+	HTTP      *HttpService `json:"http,omitempty"`
+	Port      *PortService `json:"port,omitempty"`
+	Available bool         `json:"available"`
+	Timestamp time.Time    `json:"timestamp"`
 }

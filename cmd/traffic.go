@@ -81,7 +81,23 @@ func main() {
 
 	for _, port := range tunConfig.Ports {
 
-		p := spokes.Port{Port: port.Port, Destination: "127.0.0.1", DstPort: 22}
+		p := spokes.Port{
+			Port:        port.Port,
+			Destination: "127.0.0.1",
+			DstPort:     2200,
+			Firewall: spokes.FwRuleList{
+				spokes.FwRule{
+					Sequence: 1,
+					Action:   spokes.FwActionAllow,
+					Network:  "1.2.3.4/32",
+				},
+				spokes.FwRule{
+					Sequence: 2,
+					Action:   spokes.FwActionAllow,
+					Network:  "2600:4041:4468:6f00::1e47/128",
+				},
+			},
+		}
 
 		if _, err := client.UpdatePortForwarding(tun.ID, []*spokes.Port{&p}); err != nil {
 			fmt.Println("Error: " + err.Error())
@@ -103,6 +119,18 @@ func main() {
 			Port:        8080,
 			WebRoot:     "/tmp",
 			Redirect:    false,
+			Firewall: spokes.FwRuleList{
+				spokes.FwRule{
+					Sequence: 1,
+					Action:   spokes.FwActionAllow,
+					Network:  "1.2.3.4/32",
+				},
+				spokes.FwRule{
+					Sequence: 2,
+					Action:   spokes.FwActionAllow,
+					Network:  "2600:4041:4468:6f00::1e47/128",
+				},
+			},
 		}})
 
 	client.UpdateHTTPSite(tun.ID, []*spokes.Http{
@@ -113,10 +141,22 @@ func main() {
 			Port:        8080,
 			WebRoot:     "/tmp",
 			Redirect:    true,
-			RewriteHost: "api-test-100.spokes.example.com",
+			RewriteHost: "api-test-100.spokes.borak.co",
+			Firewall: spokes.FwRuleList{
+				spokes.FwRule{
+					Sequence: 0,
+					Action:   spokes.FwActionAllow,
+					Network:  "71.172.242.211/32",
+				},
+				spokes.FwRule{
+					Sequence: 0,
+					Action:   spokes.FwActionAllow,
+					Network:  "2600:4041:4468:6f00::1e47/128",
+				},
+			},
 		}})
 
-	client.UpdateHTTPSite(tun.ID, []*spokes.Http{
+	_, err = client.UpdateHTTPSite(tun.ID, []*spokes.Http{
 		{
 			Domain:      "api-test-2" + basename,
 			Destination: "127.0.0.1",
@@ -125,7 +165,16 @@ func main() {
 			Redirect:    true,
 			CA:          certBase64,
 			PrivateKey:  privateKeyBase64,
+			Firewall: spokes.FwRuleList{spokes.FwRule{
+				Sequence: 1,
+				Action:   spokes.FwActionAllow,
+				Network:  "1.2.3.4/32",
+			}},
 		}})
+
+	if err != nil {
+		fmt.Printf("ERROR: %s\n", err.Error())
+	}
 
 	// Create some port mapping rules now..
 	client.UpdatePortMapping(tun.ID, []*spokes.PortMap{
@@ -147,6 +196,29 @@ func main() {
 			HTTP:        false,
 			Label:       "port-mapping-2",
 		}})
+
+	// Get the tunnel configuration and delete all of the rules.
+	if resp, err := client.TunnelConfig(tun.ID); err != nil {
+		fmt.Printf("ERROR: %s\n", err.Error())
+	} else if resp != nil {
+		for _, http := range resp.Config.Https {
+			if http.Domain != "api-test-1"+basename {
+				continue
+			}
+
+			if len(http.Firewall) == 0 {
+				fmt.Println("ERROR: expecting firewall rules but none found...")
+			} else {
+				fmt.Println("DEBUG: printing firewall rules")
+				for _, rule := range http.Firewall {
+					fmt.Printf("Seq: %d, Domain: %s, Action: %s, Network: %s\n",
+						rule.Sequence, http.Domain, rule.Action, rule.Network)
+				}
+				fmt.Println("")
+			}
+		}
+	}
+
 }
 
 var (

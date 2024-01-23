@@ -2,6 +2,7 @@ package spokes
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
@@ -16,6 +17,9 @@ import (
 const (
 	BasePath           = "/api/admin/"
 	AuthPath           = "/api/admin/v1.0/auth"
+	InfoPath           = "/api/admin/v1.0/info"
+	PingPath           = "/api/admin/v1.0/ping"
+	KeepAlivePath      = "/api/admin/v1.0/keepalive"
 	LogoutPath         = "/api/admin/v1.0/logout"
 	LicenseInfoPath    = "/api/admin/v1.0/license/info"
 	ListTokensPath     = "/api/admin/v1.0/token/registration/list"
@@ -36,12 +40,13 @@ const (
 )
 
 var (
-	debug = false
+	Debug = false
 )
 
 type Client struct {
-	client  *http.Client
-	address string
+	client   *http.Client
+	address  string
+	insecure bool // default is false
 }
 
 func NewClientWithURL(address string) (*Client, error) {
@@ -69,6 +74,20 @@ func NewClientWithURL(address string) (*Client, error) {
 	return c, nil
 }
 
+// Passing a 'true' value will put this client in insecure-mode and accept
+// any TLS certificate it receives from the server.  Passing in false will
+// perform proper verification of server and client-side certificates.
+func (c *Client) SetInsecure(b bool) error {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: b},
+	}
+	c.client.Transport = tr
+
+	// Set this field value so it can used in the PoolConnect() function later.
+	c.insecure = b
+	return nil
+}
+
 func (c *Client) Auth(key string) (*BasicResponse, error) {
 	response, err := c.request("POST", AuthPath, &AuthRequest{Key: key})
 	if err == nil {
@@ -81,6 +100,63 @@ func (c *Client) Auth(key string) (*BasicResponse, error) {
 				return ar, nil
 			} else {
 				return ar, fmt.Errorf(ar.Error)
+			}
+		}
+	}
+
+	return nil, err
+}
+
+func (c *Client) Info() (*ServerInfoResponse, error) {
+	response, err := c.request("GET", InfoPath, nil)
+	if err == nil {
+		sir := &ServerInfoResponse{}
+		if err = json.Decode(response.Body, sir); err == nil {
+			response.Body.Close()
+			if sir.Status {
+				// Debug
+				dumpPrettyJson(sir)
+				return sir, nil
+			} else {
+				return nil, fmt.Errorf(sir.Error)
+			}
+		}
+	}
+
+	return nil, err
+}
+
+func (c *Client) Ping() (*BasicResponse, error) {
+	response, err := c.request("GET", PingPath, nil)
+	if err == nil {
+		br := &BasicResponse{}
+		if err = json.Decode(response.Body, br); err == nil {
+			response.Body.Close()
+			if br.Status {
+				// Debug
+				dumpPrettyJson(br)
+				return br, nil
+			} else {
+				return nil, fmt.Errorf(br.Error)
+			}
+		}
+	}
+
+	return nil, err
+}
+
+func (c *Client) KeepAlive() (*BasicResponse, error) {
+	response, err := c.request("GET", KeepAlivePath, nil)
+	if err == nil {
+		br := &BasicResponse{}
+		if err = json.Decode(response.Body, br); err == nil {
+			response.Body.Close()
+			if br.Status {
+				// Debug
+				dumpPrettyJson(br)
+				return br, nil
+			} else {
+				return nil, fmt.Errorf(br.Error)
 			}
 		}
 	}
@@ -235,8 +311,12 @@ func (c *Client) Tunnels() (*TunResponse, error) {
 	return nil, err
 }
 
-func (c *Client) ActiveTunnels() (*TunResponse, error) {
-	response, err := c.request("GET", ListActiveTunsPath, nil)
+func (c *Client) ActiveTunnels(details bool) (*TunResponse, error) {
+	path := ListActiveTunsPath
+	if details {
+		path = path + "?details=true"
+	}
+	response, err := c.request("GET", path, nil)
 	if err == nil {
 		tr := &TunResponse{}
 		if err = json.Decode(response.Body, tr); err == nil {
@@ -254,8 +334,12 @@ func (c *Client) ActiveTunnels() (*TunResponse, error) {
 	return nil, err
 }
 
-func (c *Client) OnlineTunnels() (*TunResponse, error) {
-	response, err := c.request("GET", ListOnlineTunsPath, nil)
+func (c *Client) OnlineTunnels(details bool) (*TunResponse, error) {
+	path := ListOnlineTunsPath
+	if details {
+		path = path + "?details=true"
+	}
+	response, err := c.request("GET", path, nil)
 	if err == nil {
 		tr := &TunResponse{}
 		if err = json.Decode(response.Body, tr); err == nil {
@@ -436,7 +520,7 @@ func (c *Client) request(method, path string, message interface{}) (response *ht
 	if err = json.EncodePretty(body, message); err == nil {
 		var request *http.Request
 
-		if debug {
+		if Debug {
 			fmt.Printf("URL: %s\n\nMessage:\n%s\n", path, body.String())
 		}
 
@@ -463,7 +547,7 @@ func (c *Client) request(method, path string, message interface{}) (response *ht
 }
 
 func dumpPrettyJson(v interface{}) {
-	if debug {
+	if Debug {
 		fmt.Println("Response:")
 		json.EncodePretty(os.Stdout, v)
 		fmt.Println("")

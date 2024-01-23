@@ -36,10 +36,10 @@ func main() {
 	client.DeleteToken(tokenResp.Token.ID)
 
 	fmt.Println("Active Tunnels")
-	client.ActiveTunnels()
+	client.ActiveTunnels(false)
 
 	fmt.Println("Online Tunnels")
-	tunResp, _ := client.OnlineTunnels()
+	tunResp, _ := client.OnlineTunnels(false)
 	if len(tunResp.Tunnels) > 0 {
 		fmt.Println("Tunnel Detail")
 		client.Tunnel(tunResp.Tunnels[0].ID)

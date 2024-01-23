@@ -61,19 +61,19 @@ func (c *Client) DeleteHTTPSite(tunID UID, domains []string) (*BasicResponse, er
 	return nil, err
 }
 
-func (c *Client) AllocatePort(tunID UID) (*BasicResponse, error) {
+func (c *Client) AllocatePort(tunID UID) (*PortResponse, error) {
 	path := AllocatePortPath + tunID.String()
 	response, err := c.request("GET", path, nil)
 	if err == nil {
-		br := &BasicResponse{}
-		if err = json.Decode(response.Body, br); err == nil {
+		pr := &PortResponse{}
+		if err = json.Decode(response.Body, pr); err == nil {
 			response.Body.Close()
-			if br.Status {
+			if pr.Status {
 				// Debug
-				dumpPrettyJson(br)
-				return br, nil
+				dumpPrettyJson(pr)
+				return pr, nil
 			} else {
-				return nil, fmt.Errorf(br.Error)
+				return nil, fmt.Errorf(pr.Error)
 			}
 		}
 	}

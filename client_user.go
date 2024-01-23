@@ -13,6 +13,7 @@ const (
 	ImportUserPath   = "/api/admin/v1.0/user/import"
 	DeleteUserPath   = "/api/admin/v1.0/user/delete/"
 	ActivateUserPath = "/api/admin/v1.0/user/activate"
+	GetUserPath      = "/api/admin/v1.0/user/get/"
 	CreateTunPath    = "/api/admin/v1.0/user/tunnel/create"
 	StopTunPath      = "/api/admin/v1.0/user/tunnel/stop/"
 	ListUserTunsPath = "/api/admin/v1.0/user/tunnel/list/"
@@ -155,8 +156,38 @@ func (c *Client) ActivateUser(userID UID, active bool) (*TunResponse, error) {
 	return nil, err
 }
 
-func (c *Client) CreateTunnel(userID UID, name, hostname string) (*TunResponse, error) {
-	tr := CreateTunRequest{UserID: userID, Name: name, Hostname: hostname}
+func (c *Client) UserExists(userID UID) (bool, error) {
+	ur, err := c.GetUser(userID)
+	if err != nil {
+		return false, err
+	}
+
+	// Return boolean is user exists or not.
+	return (ur != nil), nil
+}
+
+func (c *Client) GetUser(userID UID) (*UserResponse, error) {
+	path := GetUserPath + userID.String()
+	response, err := c.request("GET", path, nil)
+	if err == nil {
+		ur := &UserResponse{}
+		if err = json.Decode(response.Body, ur); err == nil {
+			response.Body.Close()
+			if ur.Status {
+				// Debug
+				dumpPrettyJson(ur)
+				return ur, nil
+			} else {
+				return nil, fmt.Errorf(ur.Error)
+			}
+		}
+	}
+
+	return nil, err
+}
+
+func (c *Client) CreateTunnel(userID, tunID UID, name, hostname string) (*TunResponse, error) {
+	tr := CreateTunRequest{UserID: userID, TunID: tunID, Name: name, Hostname: hostname}
 	response, err := c.request("POST", CreateTunPath, &tr)
 	if err == nil {
 		tr := &TunResponse{}

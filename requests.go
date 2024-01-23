@@ -13,6 +13,7 @@ type TunRequest struct {
 
 type CreateTunRequest struct {
 	UserID   UID    `json:"userID"`
+	TunID    UID    `json:"tunID"`
 	Name     string `json:"name"`
 	Hostname string `json:"hostname"`
 }
@@ -45,7 +46,11 @@ type UserRequest struct {
 	Fullname     string `json:"fullname,omitempty"`
 	Phone        string `json:"phone,omitempty"`
 	Active       bool   `json:"active,omitempty`
-	MaxBandwidth int    `json:"maxBandwidth"`
+	Bandwidth    int    `json:"bandwidth,omitempty"`
+	MaxBandwidth bool   `json:"maxBandwidth,omitempty"`
+	CheckDomains bool   `json:"checkDomains,omitempty"`
+	MaxPorts     int    `json:"maxPorts,omitempty"`
+	CheckPorts   bool   `json:"checkPorts,omitempty"`
 }
 
 type BandwidthRequest struct {
